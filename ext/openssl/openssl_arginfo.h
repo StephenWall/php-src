@@ -1,5 +1,5 @@
 /* This is a generated file, edit openssl.stub.php instead.
- * Stub hash: 7cad995b734d69f98d489edb97a7878a4ea8f47e */
+ * Stub hash: 03e19427e07e6d063a0ea18e9aca817e61c981c1 */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_openssl_x509_export_to_file, 0, 2, _IS_BOOL, 0)
 	ZEND_ARG_OBJ_TYPE_MASK(0, certificate, OpenSSLCertificate, MAY_BE_STRING, NULL)
@@ -125,6 +125,22 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_openssl_pkey_export, 0, 2, _IS_B
 	ZEND_ARG_INFO(0, key)
 	ZEND_ARG_INFO(1, output)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, passphrase, IS_STRING, 1, "null")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, options, IS_ARRAY, 1, "null")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_openssl_pkcs8_export, 0, 2, _IS_BOOL, 0)
+	ZEND_ARG_INFO(0, key)
+	ZEND_ARG_INFO(1, output)
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, passphrase, IS_STRING, 1, "null")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, cipher, IS_STRING, 1, "null")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, options, IS_ARRAY, 1, "null")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_openssl_pkcs8_export_to_file, 0, 2, _IS_BOOL, 0)
+	ZEND_ARG_INFO(0, key)
+	ZEND_ARG_TYPE_INFO(0, output_file, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, passphrase, IS_STRING, 1, "null")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, cipher, IS_STRING, 1, "null")
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, options, IS_ARRAY, 1, "null")
 ZEND_END_ARG_INFO()
 
@@ -467,6 +483,8 @@ ZEND_FUNCTION(openssl_csr_get_public_key);
 ZEND_FUNCTION(openssl_pkey_new);
 ZEND_FUNCTION(openssl_pkey_export_to_file);
 ZEND_FUNCTION(openssl_pkey_export);
+ZEND_FUNCTION(openssl_pkcs8_export);
+ZEND_FUNCTION(openssl_pkcs8_export_to_file);
 ZEND_FUNCTION(openssl_pkey_get_public);
 ZEND_FUNCTION(openssl_pkey_free);
 ZEND_FUNCTION(openssl_pkey_get_private);
@@ -548,6 +566,8 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(openssl_pkey_new, arginfo_openssl_pkey_new)
 	ZEND_FE(openssl_pkey_export_to_file, arginfo_openssl_pkey_export_to_file)
 	ZEND_FE(openssl_pkey_export, arginfo_openssl_pkey_export)
+	ZEND_FE(openssl_pkcs8_export, arginfo_openssl_pkcs8_export)
+	ZEND_FE(openssl_pkcs8_export_to_file, arginfo_openssl_pkcs8_export_to_file)
 	ZEND_FE(openssl_pkey_get_public, arginfo_openssl_pkey_get_public)
 	ZEND_RAW_FENTRY("openssl_get_publickey", zif_openssl_pkey_get_public, arginfo_openssl_get_publickey, 0, NULL, NULL)
 	ZEND_RAW_FENTRY("openssl_pkey_free", zif_openssl_pkey_free, arginfo_openssl_pkey_free, ZEND_ACC_DEPRECATED, NULL, NULL)
@@ -751,6 +771,14 @@ static void register_openssl_symbols(int module_number)
 	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkey_export", sizeof("openssl_pkey_export") - 1), 0, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
 
 	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkey_export", sizeof("openssl_pkey_export") - 1), 2, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
+
+	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkcs8_export", sizeof("openssl_pkcs8_export") - 1), 0, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
+
+	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkcs8_export", sizeof("openssl_pkcs8_export") - 1), 2, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
+
+	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkcs8_export_to_file", sizeof("openssl_pkcs8_export_to_file") - 1), 0, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
+
+	zend_add_parameter_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkcs8_export_to_file", sizeof("openssl_pkcs8_export_to_file") - 1), 2, ZSTR_KNOWN(ZEND_STR_SENSITIVEPARAMETER), 0);
 
 	zend_attribute *attribute_Deprecated_func_openssl_pkey_free_0 = zend_add_function_attribute(zend_hash_str_find_ptr(CG(function_table), "openssl_pkey_free", sizeof("openssl_pkey_free") - 1), ZSTR_KNOWN(ZEND_STR_DEPRECATED_CAPITALIZED), 2);
 	ZVAL_STR(&attribute_Deprecated_func_openssl_pkey_free_0->args[0].value, ZSTR_KNOWN(ZEND_STR_8_DOT_0));

@@ -590,6 +590,17 @@ function openssl_pkey_export_to_file(#[\SensitiveParameter] $key, string $output
  */
 function openssl_pkey_export(#[\SensitiveParameter] $key, &$output, #[\SensitiveParameter] ?string $passphrase = null, ?array $options = null): bool {}
 
+/**
+ * @param OpenSSLAsymmetricKey|OpenSSLCertificate|array|string $key
+ * @param string $output
+ */
+function openssl_pkcs8_export(#[\SensitiveParameter] $key, &$output, #[\SensitiveParameter] ?string $passphrase = null, ?string $cipher = null, ?array $options = null): bool {}
+
+/**
+ * @param OpenSSLAsymmetricKey|OpenSSLCertificate|array|string $key
+ */
+function openssl_pkcs8_export_to_file(#[\SensitiveParameter] $key, string $output_file, #[\SensitiveParameter] ?string $passphrase = null, ?string $cipher = null, ?array $options = null): bool {}
+
 /** @param OpenSSLAsymmetricKey|OpenSSLCertificate|array|string $public_key */
 function openssl_pkey_get_public($public_key): OpenSSLAsymmetricKey|false {}
 

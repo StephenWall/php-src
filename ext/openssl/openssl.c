@@ -2665,6 +2665,187 @@ cleanup:
 }
 /* }}} */
 
+/* {{{ Gets an exportable representation of a PKCS #8 key into a string */
+PHP_FUNCTION(openssl_pkcs8_export)
+{
+	struct php_x509_request req;
+	zval * zpkey, * args = NULL, *out;
+	char * passphrase = NULL;
+	size_t passphrase_len = 0;
+	int pem_write = 0;
+	EVP_PKEY * key;
+	BIO * bio_out = NULL;
+	const EVP_CIPHER * cipher = NULL;
+	char * cipher_str = NULL;
+	size_t cipher_len = 0;
+	int pbe_nid = -1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zz|s!s!a!", &zpkey, &out, &cipher_str, &cipher_len, &passphrase, &passphrase_len, &args) == FAILURE) {
+		RETURN_THROWS();
+	}
+	RETVAL_FALSE;
+
+	PHP_OPENSSL_CHECK_SIZE_T_TO_INT(passphrase_len, passphrase, 3);
+
+	key = php_openssl_pkey_from_zval(zpkey, 0, passphrase, passphrase_len, 1);
+	if (key == NULL) {
+		if (!EG(exception)) {
+			php_error_docref(NULL, E_WARNING, "Cannot get key from parameter 1");
+		}
+		RETURN_FALSE;
+	}
+
+	PHP_SSL_REQ_INIT(&req);
+
+	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+		bio_out = BIO_new(BIO_s_mem());
+
+		if (passphrase) {
+			if (cipher_str) {
+				cipher = EVP_get_cipherbyname(cipher_str);
+				if (!cipher) {
+					pbe_nid = OBJ_txt2nid(cipher_str);
+					if (pbe_nid == NID_undef) {
+						if (!EG(exception)) {
+							php_error_docref(NULL, E_WARNING, "Unknown cipher algorithm");
+						}
+						RETURN_FALSE;
+					}
+				}
+			} else {
+				if (req.priv_key_encrypt && req.priv_key_encrypt_cipher) {
+					cipher = req.priv_key_encrypt_cipher;
+				} else {
+					cipher = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA256");
+					if (!cipher) {
+						pbe_nid = OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC;
+					}
+				}
+			}
+		}
+
+		if (pbe_nid == -1) {
+			pem_write = PEM_write_bio_PKCS8PrivateKey(
+					bio_out, key, cipher,
+					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		} else {
+			pem_write = PEM_write_bio_PKCS8PrivateKey_nid(
+					bio_out, key, pbe_nid,
+					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		}
+		if (pem_write) {
+			/* Success!
+			 * If returning the output as a string, do so now */
+
+			char * bio_mem_ptr;
+			long bio_mem_len;
+			RETVAL_TRUE;
+
+			bio_mem_len = BIO_get_mem_data(bio_out, &bio_mem_ptr);
+			ZEND_TRY_ASSIGN_REF_STRINGL(out, bio_mem_ptr, bio_mem_len);
+		} else {
+			php_openssl_store_errors();
+		}
+	}
+	BIO_free(bio_out);
+	EVP_PKEY_free(key);
+	PHP_SSL_REQ_DISPOSE(&req);
+}
+
+PHP_FUNCTION(openssl_pkcs8_export_to_file)
+{
+	struct php_x509_request req;
+	zval * zpkey, * args = NULL;
+	char * passphrase = NULL;
+	size_t passphrase_len = 0;
+	char * filename = NULL, file_path[MAXPATHLEN];
+	size_t filename_len = 0;
+	int pem_write = 0;
+	EVP_PKEY * key;
+	BIO * bio_out = NULL;
+	const EVP_CIPHER * cipher = NULL;
+	char * cipher_str = NULL;
+	size_t cipher_len = 0;
+	int pbe_nid = -1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zp|s!s!a!", &zpkey, &filename, $filename_len, &cipher_str, &cipher_len, &passphrase, &passphrase_len, &args) == FAILURE) {
+		RETURN_THROWS();
+	}
+	RETVAL_FALSE;
+
+	PHP_OPENSSL_CHECK_SIZE_T_TO_INT(passphrase_len, passphrase, 3);
+
+	key = php_openssl_pkey_from_zval(zpkey, 0, passphrase, passphrase_len, 1);
+	if (key == NULL) {
+		if (!EG(exception)) {
+			php_error_docref(NULL, E_WARNING, "Cannot get key from parameter 1");
+		}
+		RETURN_FALSE;
+	}
+
+	if (!php_openssl_check_path(filename, filename_len, file_path, 2)) {
+		EVP_PKEY_free(key);
+		return;
+	}
+
+	PHP_SSL_REQ_INIT(&req);
+
+	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
+		bio_out = BIO_new_file(file_path, PHP_OPENSSL_BIO_MODE_W(PKCS7_BINARY));
+		if (bio_out == NULL) {
+			php_openssl_store_errors();
+			goto clean_exit;
+		}
+
+		if (passphrase) {
+			if (cipher_str) {
+				cipher = EVP_get_cipherbyname(cipher_str);
+				if (!cipher) {
+					pbe_nid = OBJ_txt2nid(cipher_str);
+					if (pbe_nid == NID_undef) {
+						if (!EG(exception)) {
+							php_error_docref(NULL, E_WARNING, "Unknown cipher algorithm");
+						}
+						RETURN_FALSE;
+					}
+				}
+			} else {
+				if (req.priv_key_encrypt && req.priv_key_encrypt_cipher) {
+					cipher = req.priv_key_encrypt_cipher;
+				} else {
+					cipher = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA256");
+					if (!cipher) {
+						pbe_nid = OBJ_pbe_WithSHA1And3_Key_TripleDES_CBC;
+					}
+				}
+			}
+		}
+
+		if (pbe_nid == -1) {
+			pem_write = PEM_write_bio_PKCS8PrivateKey(
+					bio_out, key, cipher,
+					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		} else {
+			pem_write = PEM_write_bio_PKCS8PrivateKey_nid(
+					bio_out, key, pbe_nid,
+					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		}
+		if (pem_write) {
+			/* Success!
+			 * If returning the output as a string, do so now */
+			RETVAL_TRUE;
+		} else {
+			php_openssl_store_errors();
+		}
+	}
+
+clean_exit:
+	BIO_free(bio_out);
+	EVP_PKEY_free(key);
+	PHP_SSL_REQ_DISPOSE(&req);
+}
+/* }}} */
+
 /* {{{ Gets public key from X.509 certificate */
 PHP_FUNCTION(openssl_pkey_get_public)
 {
