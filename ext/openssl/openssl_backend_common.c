@@ -968,7 +968,34 @@ zend_result php_openssl_csr_make(struct php_x509_request * req, X509_REQ * csr, 
 		/* apply values from the dn hash */
 		ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(dn), strindex, item) {
 			if (strindex) {
-				int nid = OBJ_txt2nid(ZSTR_VAL(strindex));
+				char *object = ZSTR_VAL(strindex);
+
+				/* If it starts with a plus, it's a multi-RDN */
+				if (*object == '+') {
+					++object;
+				}
+				nid = OBJ_txt2nid(object);
+				if (nid == NID_undef) {
+					/* Skip past any leading X. X: X, etc
+					 * to allow for multiple instances */
+					char * newobj = object;
+					for (str = newobj; *str; str++) {
+						if (*str == ':' || *str == ',' || *str == '.') {
+							str++;
+							if (*str) {
+								newobj = str;
+							}
+							break;
+						}
+					}
+					if (newobj != object) {
+						/* If it starts with a plus, it's a multi-RDN */
+						if (*newobj == '+') {
+							++newobj;
+						}
+						nid = OBJ_txt2nid(newobj);
+					}
+				}
 				if (nid != NID_undef) {
 					if (Z_TYPE_P(item) == IS_ARRAY) {
 						ZEND_HASH_FOREACH_NUM_KEY_VAL(Z_ARRVAL_P(item), i, subitem) {
