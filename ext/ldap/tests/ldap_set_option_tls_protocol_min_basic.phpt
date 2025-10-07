@@ -15,6 +15,7 @@ foreach([
     LDAP_OPT_X_TLS_PROTOCOL_TLS1_0,
     LDAP_OPT_X_TLS_PROTOCOL_TLS1_1,
     LDAP_OPT_X_TLS_PROTOCOL_TLS1_2,
+    LDAP_OPT_X_TLS_PROTOCOL_TLS1_3,
 ] as $option) {
     $result = ldap_set_option($link, LDAP_OPT_X_TLS_PROTOCOL_MIN, $option);
     var_dump($result);
@@ -34,3 +35,5 @@ bool(true)
 int(770)
 bool(true)
 int(771)
+bool(true)
+int(772)

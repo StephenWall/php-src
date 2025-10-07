@@ -384,6 +384,45 @@ namespace {
     const LDAP_OPT_X_TLS_PACKAGE = UNKNOWN;
 #endif
 
+#ifdef LDAP_OPT_X_TLS_OPENSSL_CONF
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_OPENSSL_CONF
+     */
+    const LDAP_OPT_X_TLS_OPENSSL_CONF = UNKNOWN;
+#endif
+
+#ifdef LDAP_OPT_X_TLS_CERT_NAME_CHECK
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_CERT_NAME_CHECK
+     */
+    const LDAP_OPT_X_TLS_CERT_NAME_CHECK = UNKNOWN;
+#endif
+
+#ifdef LDAP_OPT_X_TLS_OCSP_CHECK
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_OCSP_CHECK
+     */
+    const LDAP_OPT_X_TLS_OCSP_CHECK = UNKNOWN;
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_OCSP_AIA_OVERRIDE
+     */
+    const LDAP_OPT_X_TLS_OCSP_AIA_OVERRIDE = UNKNOWN;
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_OCSP_NONCE
+     */
+    const LDAP_OPT_X_TLS_OCSP_NONCE = UNKNOWN;
+    /**
+     * @var int
+     * @cvalue LDAP_OPT_X_TLS_OCSP_RESPONDER
+     */
+    const LDAP_OPT_X_TLS_OCSP_RESPONDER = UNKNOWN;
+#endif
+
 #ifdef LDAP_OPT_X_KEEPALIVE_IDLE
     /**
      * @var int
