@@ -3027,6 +3027,14 @@ PHP_FUNCTION(ldap_get_option)
 #ifdef LDAP_OPT_X_TLS_PROTOCOL_MAX
 	case LDAP_OPT_X_TLS_PROTOCOL_MAX:
 #endif
+#ifdef LDAP_OPT_X_TLS_CERT_NAME_CHECK
+	case LDAP_OPT_X_TLS_CERT_NAME_CHECK:
+#endif
+#ifdef LDAP_OPT_X_TLS_OCSP_CHECK
+	case LDAP_OPT_X_TLS_OCSP_CHECK:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_OCSP_AIA_OVERRIDE:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_OCSP_NONCE:	/* OpenSSL only */
+#endif
 #ifdef LDAP_OPT_X_KEEPALIVE_IDLE
 	case LDAP_OPT_X_KEEPALIVE_IDLE:
 	case LDAP_OPT_X_KEEPALIVE_PROBES:
@@ -3117,6 +3125,12 @@ PHP_FUNCTION(ldap_get_option)
 #ifdef LDAP_OPT_X_TLS_DHFILE
 	case LDAP_OPT_X_TLS_DHFILE:
 #endif
+#ifdef LDAP_OPT_X_TLS_OPENSSL_CONF
+	case LDAP_OPT_X_TLS_OPENSSL_CONF:	/* OpenSSL only */
+#endif
+#ifdef LDAP_OPT_X_TLS_OCSP_RESPONDER
+	case LDAP_OPT_X_TLS_OCSP_RESPONDER:	/* OpenSSL only */
+#endif
 #ifdef LDAP_OPT_MATCHED_DN
 	case LDAP_OPT_MATCHED_DN:
 #endif
@@ -3190,6 +3204,14 @@ PHP_FUNCTION(ldap_set_option)
 #endif
 #ifdef LDAP_OPT_X_TLS_PROTOCOL_MAX
 	case LDAP_OPT_X_TLS_PROTOCOL_MAX:
+#endif
+#ifdef LDAP_OPT_X_TLS_OCSP_CHECK
+	case LDAP_OPT_X_TLS_OCSP_CHECK:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_OCSP_AIA_OVERRIDE:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_OCSP_NONCE:	/* OpenSSL only */
+#endif
+#ifdef LDAP_OPT_X_TLS_CERT_NAME_CHECK
+	case LDAP_OPT_X_TLS_CERT_NAME_CHECK:
 #endif
 		/* TLS option change requires resetting TLS context */
 		LDAPG(tls_newctx) = true;
@@ -3289,6 +3311,12 @@ PHP_FUNCTION(ldap_set_option)
 #endif
 #ifdef LDAP_OPT_X_TLS_DHFILE
 	case LDAP_OPT_X_TLS_DHFILE:
+#endif
+#ifdef LDAP_OPT_X_TLS_OPENSSL_CONF
+	case LDAP_OPT_X_TLS_OPENSSL_CONF:	/* OpenSSL only */
+#endif
+#ifdef LDAP_OPT_X_TLS_OCSP_RESPONDER
+	case LDAP_OPT_X_TLS_OCSP_RESPONDER:	/* OpenSSL only */
 #endif
 		/* TLS option change requires resetting TLS context */
 		LDAPG(tls_newctx) = true;
