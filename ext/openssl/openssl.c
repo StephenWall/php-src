@@ -2679,8 +2679,13 @@ PHP_FUNCTION(openssl_pkcs8_export)
 	char * cipher_str = NULL;
 	size_t cipher_len = 0;
 	int pbe_nid = -1;
+	PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+	char * randfile = NULL;
+	int egdsocket, seeded;
+	X509_SIG *p8 = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zz|s!s!a!", &zpkey, &out, &cipher_str, &cipher_len, &passphrase, &passphrase_len, &args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zz/|s!s!a!", &zpkey, &out, &passphrase, &passphrase_len,
+				  &cipher_str, &cipher_len, &args) == FAILURE) {
 		RETURN_THROWS();
 	}
 	RETVAL_FALSE;
@@ -2698,8 +2703,6 @@ PHP_FUNCTION(openssl_pkcs8_export)
 	PHP_SSL_REQ_INIT(&req);
 
 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
-		bio_out = BIO_new(BIO_s_mem());
-
 		if (passphrase) {
 			if (cipher_str) {
 				cipher = EVP_get_cipherbyname(cipher_str);
@@ -2724,15 +2727,34 @@ PHP_FUNCTION(openssl_pkcs8_export)
 			}
 		}
 
-		if (pbe_nid == -1) {
-			pem_write = PEM_write_bio_PKCS8PrivateKey(
-					bio_out, key, cipher,
-					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
-		} else {
-			pem_write = PEM_write_bio_PKCS8PrivateKey_nid(
-					bio_out, key, pbe_nid,
-					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		randfile = php_openssl_conf_get_string(req.req_config, req.section_name, "RANDFILE");
+		php_openssl_load_rand_file(randfile, &egdsocket, &seeded);
+
+		if (!(p8inf = EVP_PKEY2PKCS8(key)))
+		{
+			if (!EG(exception)) {
+				php_error_docref(NULL, E_WARNING, "Error converting key");
+			}
+			RETURN_FALSE;
 		}
+
+		bio_out = BIO_new(BIO_s_mem());
+
+		if (passphrase) {
+			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
+						 passphrase, passphrase_len,
+						 NULL, 0, PKCS12_DEFAULT_ITER, p8inf))) {
+				if (!EG(exception)) {
+					php_error_docref(NULL, E_WARNING, "Error encrypting key");
+				}
+				RETURN_FALSE;
+			}
+			pem_write = PEM_write_bio_PKCS8(bio_out, p8);
+		} else {
+			pem_write = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bio_out, p8inf);
+		}
+		php_openssl_write_rand_file(randfile, egdsocket, seeded);
+
 		if (pem_write) {
 			/* Success!
 			 * If returning the output as a string, do so now */
@@ -2758,8 +2780,6 @@ PHP_FUNCTION(openssl_pkcs8_export_to_file)
 	zval * zpkey, * args = NULL;
 	char * passphrase = NULL;
 	size_t passphrase_len = 0;
-	char * filename = NULL, file_path[MAXPATHLEN];
-	size_t filename_len = 0;
 	int pem_write = 0;
 	EVP_PKEY * key;
 	BIO * bio_out = NULL;
@@ -2767,8 +2787,15 @@ PHP_FUNCTION(openssl_pkcs8_export_to_file)
 	char * cipher_str = NULL;
 	size_t cipher_len = 0;
 	int pbe_nid = -1;
+	PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+	char * randfile = NULL;
+	int egdsocket, seeded;
+	X509_SIG *p8 = NULL;
+	char * filename = NULL, file_path[MAXPATHLEN];
+	size_t filename_len = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zp|s!s!a!", &zpkey, &filename, $filename_len, &cipher_str, &cipher_len, &passphrase, &passphrase_len, &args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zp|s!s!s!a!", &zpkey, &filename, &filename_len, &passphrase, &passphrase_len,
+				  &cipher_str, &cipher_len, &args) == FAILURE) {
 		RETURN_THROWS();
 	}
 	RETVAL_FALSE;
@@ -2791,12 +2818,6 @@ PHP_FUNCTION(openssl_pkcs8_export_to_file)
 	PHP_SSL_REQ_INIT(&req);
 
 	if (PHP_SSL_REQ_PARSE(&req, args) == SUCCESS) {
-		bio_out = BIO_new_file(file_path, PHP_OPENSSL_BIO_MODE_W(PKCS7_BINARY));
-		if (bio_out == NULL) {
-			php_openssl_store_errors();
-			goto clean_exit;
-		}
-
 		if (passphrase) {
 			if (cipher_str) {
 				cipher = EVP_get_cipherbyname(cipher_str);
@@ -2821,15 +2842,38 @@ PHP_FUNCTION(openssl_pkcs8_export_to_file)
 			}
 		}
 
-		if (pbe_nid == -1) {
-			pem_write = PEM_write_bio_PKCS8PrivateKey(
-					bio_out, key, cipher,
-					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
-		} else {
-			pem_write = PEM_write_bio_PKCS8PrivateKey_nid(
-					bio_out, key, pbe_nid,
-					(unsigned char *)passphrase, (int)passphrase_len, NULL, NULL);
+		randfile = php_openssl_conf_get_string(req.req_config, req.section_name, "RANDFILE");
+		php_openssl_load_rand_file(randfile, &egdsocket, &seeded);
+
+		if (!(p8inf = EVP_PKEY2PKCS8(key)))
+		{
+			if (!EG(exception)) {
+				php_error_docref(NULL, E_WARNING, "Error converting key");
+			}
+			RETURN_FALSE;
 		}
+
+		bio_out = BIO_new_file(file_path, PHP_OPENSSL_BIO_MODE_W(PKCS7_BINARY));
+		if (bio_out == NULL) {
+			php_openssl_store_errors();
+			goto clean_exit;
+		}
+
+		if (passphrase) {
+			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
+						 passphrase, passphrase_len,
+						 NULL, 0, PKCS12_DEFAULT_ITER, p8inf))) {
+				if (!EG(exception)) {
+					php_error_docref(NULL, E_WARNING, "Error encrypting key");
+				}
+				RETURN_FALSE;
+			}
+			pem_write = PEM_write_bio_PKCS8(bio_out, p8);
+		} else {
+			pem_write = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bio_out, p8inf);
+		}
+		php_openssl_write_rand_file(randfile, egdsocket, seeded);
+
 		if (pem_write) {
 			/* Success!
 			 * If returning the output as a string, do so now */
@@ -2844,6 +2888,8 @@ clean_exit:
 	EVP_PKEY_free(key);
 	PHP_SSL_REQ_DISPOSE(&req);
 }
+
+
 /* }}} */
 
 /* {{{ Gets public key from X.509 certificate */
